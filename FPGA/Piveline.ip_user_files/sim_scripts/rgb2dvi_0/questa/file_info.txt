@@ -1,0 +1,3 @@
+xpm_cdc.sv,systemverilog,xpm,../ip/xpm/xpm_cdc/hdl/xpm_cdc.sv,incdir="../../../../../../../../../tools/Xilinx/2025.2/data/rsb/busdef"
+rgb2dvi_0_sim_netlist.v,verilog,xil_defaultlib,../../../../Piveline.gen/sources_1/ip/rgb2dvi_0/rgb2dvi_0_sim_netlist.v,incdir="../../../../../../../../../tools/Xilinx/2025.2/data/rsb/busdef"
+glbl.v,Verilog,xil_defaultlib,glbl.v
