@@ -1,4 +1,4 @@
-`include "./csr_funct3.vh"
+`include "modules/headers/csr_funct3.vh"
 
 module CSRFile #(
     parameter XLEN = 32
