@@ -9,12 +9,14 @@ module CSRFile_tb;
     reg  [11:0] csr_write_address;
     reg  [31:0] csr_write_data;
     reg instruction_retired;
+    reg timer_interrupt_pending;
 
     wire [31:0] csr_read_out;
     wire        csr_ready;
 
     CSRFile csr_file (
         .clk(clk),
+        .clk_enable(1'b1), // Always enabled for testing
         .reset(reset),
         .trapped(trapped),
         .csr_write_enable(csr_write_enable),
@@ -22,6 +24,8 @@ module CSRFile_tb;
         .csr_write_address(csr_write_address),
         .csr_write_data(csr_write_data),
         .instruction_retired(instruction_retired),
+        .valid_csr_address(1'b1), // Assume all addresses are valid for testing
+        .timer_interrupt_pending(timer_interrupt_pending),
 
         .csr_read_out(csr_read_out),
         .csr_ready(csr_ready)
@@ -37,6 +41,7 @@ module CSRFile_tb;
         // Reset to DEFAULT value, Initialize signals.
         reset = 1;
         trapped = 0;
+        timer_interrupt_pending = 0;
         csr_write_enable = 0;
         csr_read_address = 12'h000;
         csr_write_address = 12'h000;
@@ -243,6 +248,13 @@ module CSRFile_tb;
         csr_read_address = 12'hB02;
         #10;
         $display("minstret after 2 more retired = %h (should be +2)", csr_read_out);
+
+        csr_read_address = 12'h344; #10;
+        $display("mip = %b (MTIP should be 0)", csr_read_out);
+        timer_interrupt_pending = 1;
+        #20;
+        csr_read_address = 12'h344; #10;
+        $display("mip = %b (MTIP should be 1)", csr_read_out);
 
         // Final values
         $display("\n=== Final Counter Values ===");
