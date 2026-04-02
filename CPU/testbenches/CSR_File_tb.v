@@ -4,6 +4,7 @@ module CSRFile_tb;
     reg         clk;
     reg         reset;
     reg         trapped;
+    reg         mret_executed;
     reg         csr_write_enable;
     reg  [11:0] csr_read_address;
     reg  [11:0] csr_write_address;
@@ -16,31 +17,34 @@ module CSRFile_tb;
 
     CSRFile csr_file (
         .clk(clk),
-        .clk_enable(1'b1), // Always enabled for testing
+        .clk_enable(1'b1),
         .reset(reset),
         .trapped(trapped),
+        .mret_executed(mret_executed),
         .csr_write_enable(csr_write_enable),
         .csr_read_address(csr_read_address),
         .csr_write_address(csr_write_address),
         .csr_write_data(csr_write_data),
         .instruction_retired(instruction_retired),
-        .valid_csr_address(1'b1), // Assume all addresses are valid for testing
+        .valid_csr_address(1'b1),
         .timer_interrupt_pending(timer_interrupt_pending),
 
         .csr_read_out(csr_read_out),
         .csr_ready(csr_ready)
     );
 
-    // Generate clock signal, 10ns.
     initial clk = 0;
     always #5 clk = ~clk;
 
     initial begin
+        $dumpfile("wave.vcd"); 
+        $dumpvars(0, CSRFile_tb);
+
         $display("==================== CSR File Test START ====================");
         
-        // Reset to DEFAULT value, Initialize signals.
         reset = 1;
         trapped = 0;
+        mret_executed = 0;
         timer_interrupt_pending = 0;
         csr_write_enable = 0;
         csr_read_address = 12'h000;
@@ -51,7 +55,6 @@ module CSRFile_tb;
         reset = 0;
         #10;
         
-        // Test 1: Read-only CSRs read.
         csr_read_address = 12'hF11; #10; 
         $display("mvendorid = %h (expected 52564B43)", csr_read_out);
         
@@ -72,7 +75,6 @@ module CSRFile_tb;
         csr_read_address = 12'h301; #10; 
         $display("misa = %h (expected 40000100)", csr_read_out);
         
-        // Test 2: MRW CSRs' reset value check
         csr_read_address = 12'h305; #10; 
         $display("mtvec (reset) = %h (expected 00001000)", csr_read_out);
         csr_read_address = 12'h341; #10; 
@@ -80,7 +82,6 @@ module CSRFile_tb;
         csr_read_address = 12'h342; #10; 
         $display("mcause(reset) = %h (expected 00000000)", csr_read_out);
 
-        // Test 3: csrrw; mtvec
         csr_read_address = 12'h305; #10; 
         $display("mtvec = %h (expected 00001000)", csr_read_out);
 
@@ -95,7 +96,6 @@ module CSRFile_tb;
         csr_read_address = 12'h305; #10; 
         $display("mtvec = %h (expected 00003000)", csr_read_out);
         
-        // Test 4: csrrw; mepc
         csr_read_address = 12'h341; #10;
         $display("mepc = %h (expected 00000000)", csr_read_out);
 
@@ -110,7 +110,6 @@ module CSRFile_tb;
         csr_read_address = 12'h341; #10; 
         $display("mepc = %h (expected 00004000)", csr_read_out);
         
-        // Test 5: csrrw; mcause
         csr_read_address = 12'h342; #10; 
         $display("mcause = %h (expected 00000000)", csr_read_out);
 
@@ -127,7 +126,6 @@ module CSRFile_tb;
 
         $display("mcause = %h (expected 00000004)", csr_read_out);
         
-        // Test 6: csrrw; Read-only's write ignore test.
         csr_read_address = 12'hF11; #10; 
         $display("Read-only test : mvendorid = %h (expected 52564B43)", csr_read_out);
 
@@ -144,7 +142,6 @@ module CSRFile_tb;
 
         $display("Write ignored : mvendorid = %h (expected 52564B43)", csr_read_out);
         
-        // Test 7: mcycle/minstret auto-increment check (read-only counters)
         csr_read_address = 12'hB00; #10;
         $display("mcycle (lower 32-bit) = %h (auto-incremented, not 0)", csr_read_out);
         
@@ -157,7 +154,6 @@ module CSRFile_tb;
         csr_read_address = 12'hB82; #10;
         $display("minstreth (upper 32-bit) = %h (should be 0, no overflow yet)", csr_read_out);
 
-        // Test 8: Read-only test for mcycle - write should be ignored
         csr_read_address = 12'hB00; #10;
         $display("mcycle (before write attempt) = %h", csr_read_out);
 
@@ -172,7 +168,6 @@ module CSRFile_tb;
         csr_read_address = 12'hB00; #10;
         $display("mcycle (after write attempt) = %h (write should be ignored, auto-incremented)", csr_read_out);
         
-        // Test 9: Read-only test for mcycleh - write should be ignored
         csr_read_address = 12'hB80; #10;
         $display("mcycleh (before write attempt) = %h", csr_read_out);
 
@@ -187,7 +182,6 @@ module CSRFile_tb;
         csr_read_address = 12'hB80; #10;
         $display("mcycleh (after write attempt) = %h (write should be ignored, should remain 0)", csr_read_out);
         
-        // Test 10: Read-only test for minstret - write should be ignored
         csr_read_address = 12'hB02; #10;
         $display("minstret (before write attempt) = %h", csr_read_out);
 
@@ -202,7 +196,6 @@ module CSRFile_tb;
         csr_read_address = 12'hB02; #10;
         $display("minstret (after write attempt) = %h (write should be ignored, should remain 1)", csr_read_out);
         
-        // Test 11: Read-only test for minstreth - write should be ignored
         csr_read_address = 12'hB82; #10;
         $display("minstreth (before write attempt) = %h", csr_read_out);
 
@@ -217,17 +210,15 @@ module CSRFile_tb;
         csr_read_address = 12'hB82; #10;
         $display("minstreth (after write attempt) = %h (write should be ignored, should remain 0)", csr_read_out);
         
-        // Test 12: mcycle auto-increment verification
         $display("\n=== Auto-increment verification ===");
         csr_read_address = 12'hB00; 
         #10;
         $display("mcycle at T0 = %h", csr_read_out);
-        #20; // Wait 2 cycles
+        #20; 
         csr_read_address = 12'hB00; 
         #10;
         $display("mcycle at T0+2 = %h (should be +2 from previous)", csr_read_out);
         
-        // Test 13: minstret increment with instruction_retired
         $display("\n=== instruction_retired test ===");
         csr_read_address = 12'hB02;
         #10;
@@ -256,7 +247,27 @@ module CSRFile_tb;
         csr_read_address = 12'h344; #10;
         $display("mip = %b (MTIP should be 1)", csr_read_out);
 
-        // Final values
+        $display("\n=== Test 14: Trap & mret Verification ===");
+        csr_write_address = 12'h300; 
+        csr_write_data = 32'h00000008;
+        csr_write_enable = 1; #10;
+        csr_write_enable = 0; #10;
+        
+        csr_read_address = 12'h300; #10;
+        $display("Before Trap: mstatus = %h (Expected MIE=1, MPIE=0 -> 00000008)", csr_read_out);
+
+        trapped = 1; #10;
+        trapped = 0; #10;
+        
+        csr_read_address = 12'h300; #10;
+        $display("After Trap:  mstatus = %h (Expected MIE=0, MPIE=1 -> 00000080)", csr_read_out);
+
+        mret_executed = 1; #10;
+        mret_executed = 0; #10;
+        
+        csr_read_address = 12'h300; #10;
+        $display("After mret:  mstatus = %h (Expected MIE=1, MPIE=1 -> 00000088)", csr_read_out);
+
         $display("\n=== Final Counter Values ===");
         csr_read_address = 12'hB00; #10;
         $display("Final mcycle[31:0] = %h", csr_read_out);
@@ -273,7 +284,7 @@ module CSRFile_tb;
         $display("Final Full minstret = 0x%h_%h", csr_file.minstret[63:32], csr_file.minstret[31:0]);
         
         $display("\n====================  CSR File Test END  ====================");
-        $stop;
+        $finish;
     end
     
 endmodule
