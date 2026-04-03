@@ -96,7 +96,7 @@ module CSRFile #(
         csr_read_out <= {XLEN{1'b0}};
         
         MIE  <= 1'b0;
-        MPIE <= 1'b1;
+        MPIE <= 1'b0;
       end else if (clk_enable) begin
         mcycle <= mcycle + 1;
         
