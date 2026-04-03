@@ -31,6 +31,7 @@ module CSRFile #(
     reg [XLEN-1:0] mtvec;
     reg [XLEN-1:0] mepc;
     reg [XLEN-1:0] mcause;
+    reg [XLEN-1:0] mscratch;                   //ADDED
 
     reg [63:0] mcycle;
     reg [63:0] minstret;
@@ -44,6 +45,7 @@ module CSRFile #(
     localparam [XLEN-1:0] DEFAULT_mtvec  = 32'h00006D60;
     localparam [XLEN-1:0] DEFAULT_mepc   = {XLEN{1'b0}};
     localparam [XLEN-1:0] DEFAULT_mcause = {XLEN{1'b0}};
+    localparam [XLEN-1:0] DEFAULT_mscratch = {XLEN{1'b0}};        //ADDED
     localparam [XLEN-1:0] DEFAULT_mcycle = 32'b0;
     localparam [XLEN-1:0] DEFAULT_minstret = 32'b0;
     // Read Operation.
@@ -60,6 +62,7 @@ module CSRFile #(
             12'h300: csr_read_data = mstatus;
             12'h301: csr_read_data = misa;
             12'h305: csr_read_data = mtvec;
+            12'h340: csr_read_data = mscratch;             //ADDED
             12'h341: csr_read_data = mepc;
             12'h342: csr_read_data = mcause;
             12'h344: csr_read_data = mip;
@@ -86,6 +89,7 @@ module CSRFile #(
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             mtvec   <= DEFAULT_mtvec;
+            mscratch <= DEFAULT_mscratch;                       //ADDED
             mepc    <= DEFAULT_mepc;
             mcause  <= DEFAULT_mcause;
             mcycle  <= DEFAULT_mcycle;
@@ -117,6 +121,7 @@ module CSRFile #(
             if ((trapped && csr_write_enable) || (csr_write_enable)) begin
             case (csr_write_address)
                 12'h305: mtvec  <= csr_write_data;
+                12'h340: mscratch <= csr_wirte_data;           //ADDED
                 12'h341: mepc   <= csr_write_data;
                 12'h342: mcause <= csr_write_data;
                 default: ;
