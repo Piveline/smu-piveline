@@ -25,7 +25,6 @@ module CSRFile #(
     wire [XLEN-1:0] mhartid   = 32'h52_4B_43_30;    // "RKC0" ; "R"oad to "K"AIST "C"ore 0.
     wire [XLEN-1:0] mstatus   = 32'h00001800;    // MPP[12:11] = 11
     wire [XLEN-1:0] misa      = 32'h40001100;    // MXL = 32; misa[31:30] = 01. RV32"I"; misa[8] = 1.
-    wire [XLEN-1:0] mie       = 32'hABADBABE;   // This is a test commit
     wire [XLEN-1:0] mip       = {24'b0, timer_interrupt_pending, 7'b0}; // MIP[7] = MTIP (Machine Timer Interrupt Pending)
 
     reg [XLEN-1:0] mtvec;
@@ -33,6 +32,7 @@ module CSRFile #(
     reg [XLEN-1:0] mcause;
     reg [XLEN-1:0] mscratch;                   //ADDED
 
+    reg [XLEN-1:0] mie;
     reg [63:0] mcycle;
     reg [63:0] minstret;
 
@@ -48,6 +48,7 @@ module CSRFile #(
     localparam [XLEN-1:0] DEFAULT_mscratch = {XLEN{1'b0}};        //ADDED
     localparam [XLEN-1:0] DEFAULT_mcycle = 32'b0;
     localparam [XLEN-1:0] DEFAULT_minstret = 32'b0;
+    localparam [XLEN-1:0] DEFAULT_mie    = 32'b0;
     // Read Operation.
     always @(*) begin
         case (csr_read_address)
@@ -61,6 +62,7 @@ module CSRFile #(
             12'hF14: csr_read_data = mhartid;
             12'h300: csr_read_data = mstatus;
             12'h301: csr_read_data = misa;
+            12'h304: csr_read_data = mie;
             12'h305: csr_read_data = mtvec;
             12'h340: csr_read_data = mscratch;             //ADDED
             12'h341: csr_read_data = mepc;
@@ -94,6 +96,7 @@ module CSRFile #(
             mcause  <= DEFAULT_mcause;
             mcycle  <= DEFAULT_mcycle;
             minstret <= DEFAULT_minstret;
+            mie     <= DEFAULT_mie;
 
             csr_processing <= 1'b0;
             csr_read_out <= {XLEN{1'b0}};
@@ -120,6 +123,7 @@ module CSRFile #(
             // Write Operation
             if ((trapped && csr_write_enable) || (csr_write_enable)) begin
             case (csr_write_address)
+                12'h304: mie    <= csr_write_data;
                 12'h305: mtvec  <= csr_write_data;
                 12'h340: mscratch <= csr_wirte_data;           //ADDED
                 12'h341: mepc   <= csr_write_data;
