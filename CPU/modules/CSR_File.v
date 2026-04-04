@@ -1,4 +1,4 @@
-`include "./csr_funct3.vh"
+`include "modules/headers/csr_funct3.vh"
 
 module CSRFile #(
     parameter XLEN = 32
@@ -24,6 +24,7 @@ module CSRFile #(
     wire [XLEN-1:0] mhartid   = 32'h52_4B_43_30;    // "RKC0" ; "R"oad to "K"AIST "C"ore 0.
     wire [XLEN-1:0] mstatus   = 32'h00001800;    // MPP[12:11] = 11
     wire [XLEN-1:0] misa      = 32'h40001100;    // MXL = 32; misa[31:30] = 01. RV32"I"; misa[8] = 1.
+    wire [XLEN-1:0] mie       = 32'hABADBABE;   // This is a test commit
 
     reg [XLEN-1:0] mtvec;
     reg [XLEN-1:0] mepc;
