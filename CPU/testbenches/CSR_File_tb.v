@@ -4,24 +4,30 @@ module CSRFile_tb;
     reg         clk;
     reg         reset;
     reg         trapped;
+    reg         mret_executed;
     reg         csr_write_enable;
     reg  [11:0] csr_read_address;
     reg  [11:0] csr_write_address;
     reg  [31:0] csr_write_data;
     reg instruction_retired;
+    reg timer_interrupt_pending;
 
     wire [31:0] csr_read_out;
     wire        csr_ready;
 
     CSRFile csr_file (
         .clk(clk),
+        .clk_enable(1'b1), // Always enabled for testing
         .reset(reset),
         .trapped(trapped),
+        .mret_executed(mret_executed),
         .csr_write_enable(csr_write_enable),
         .csr_read_address(csr_read_address),
         .csr_write_address(csr_write_address),
         .csr_write_data(csr_write_data),
         .instruction_retired(instruction_retired),
+        .valid_csr_address(1'b1), // Assume all addresses are valid for testing
+        .timer_interrupt_pending(timer_interrupt_pending),
 
         .csr_read_out(csr_read_out),
         .csr_ready(csr_ready)
@@ -37,6 +43,8 @@ module CSRFile_tb;
         // Reset to DEFAULT value, Initialize signals.
         reset = 1;
         trapped = 0;
+        mret_executed = 0;
+        timer_interrupt_pending = 0;
         csr_write_enable = 0;
         csr_read_address = 12'h000;
         csr_write_address = 12'h000;
@@ -244,6 +252,36 @@ module CSRFile_tb;
         #10;
         $display("minstret after 2 more retired = %h (should be +2)", csr_read_out);
 
+        csr_read_address = 12'h344; #10;
+        $display("mip = %b (MTIP should be 0)", csr_read_out);
+        timer_interrupt_pending = 1;
+        #20;
+        csr_read_address = 12'h344; #10;
+        $display("mip = %b (MTIP should be 1)", csr_read_out);
+
+        // Test 14: Trap & mret Verification
+        $display("\n=== Test 14: Trap & mret Verification ===");
+
+        csr_write_address = 12'h300; 
+        csr_write_data = 32'h00000008;
+        csr_write_enable = 1; #10;
+        csr_write_enable = 0; #10;
+        
+        csr_read_address = 12'h300; #10;
+        $display("Before Trap: mstatus = %h (Expected MIE=1, MPIE=0 -> 00001808)", csr_read_out);
+
+        trapped = 1; #10;
+        trapped = 0; #10;
+        
+        csr_read_address = 12'h300; #10;
+        $display("After Trap:  mstatus = %h (Expected MIE=0, MPIE=1 -> 00001880)", csr_read_out);
+
+        mret_executed = 1; #10;
+        mret_executed = 0; #10;
+        
+        csr_read_address = 12'h300; #10;
+        $display("After mret:  mstatus = %h (Expected MIE=1, MPIE=1 -> 00001888)", csr_read_out);
+        
         // Final values
         $display("\n=== Final Counter Values ===");
         csr_read_address = 12'hB00; #10;
