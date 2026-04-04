@@ -7,6 +7,7 @@ module CSRFile #(
     input clk_enable,
     input reset,                          // reset signal
     input trapped,
+    input mret_executed,
     input csr_write_enable,               // write enable signal
     input [11:0] csr_read_address,        // address to read
     input [11:0] csr_write_address,       // address to write
@@ -23,14 +24,18 @@ module CSRFile #(
     wire [XLEN-1:0] marchid   = 32'h34_36_53_35;    // "46S5" ; "46"F arch based "S"uper scalar "5"-Stage Pipeline Architecture.
     wire [XLEN-1:0] mimpid    = 32'h34_36_49_31;    // "46I1" ; "46" instructions RISC-V RV32"I" Revision "1".
     wire [XLEN-1:0] mhartid   = 32'h52_4B_43_30;    // "RKC0" ; "R"oad to "K"AIST "C"ore 0.
-    wire [XLEN-1:0] mstatus   = 32'h00001800;    // MPP[12:11] = 11
     wire [XLEN-1:0] misa      = 32'h40001100;    // MXL = 32; misa[31:30] = 01. RV32"I"; misa[8] = 1.
     wire [XLEN-1:0] mip       = {24'b0, timer_interrupt_pending, 7'b0}; // MIP[7] = MTIP (Machine Timer Interrupt Pending)
+    
+    reg MIE;
+    reg MPIE;
+    wire [1:0] MPP = 2'b11;
+    wire [XLEN-1:0] mstatus = {19'b0, MPP, 3'b0, MPIE, 3'b0, MIE, 3'b0};
 
     reg [XLEN-1:0] mtvec;
     reg [XLEN-1:0] mepc;
     reg [XLEN-1:0] mcause;
-    reg [XLEN-1:0] mscratch;                   //ADDED
+    reg [XLEN-1:0] mscratch;
 
     reg [XLEN-1:0] mie;
     reg [63:0] mcycle;
@@ -45,7 +50,7 @@ module CSRFile #(
     localparam [XLEN-1:0] DEFAULT_mtvec  = 32'h00006D60;
     localparam [XLEN-1:0] DEFAULT_mepc   = {XLEN{1'b0}};
     localparam [XLEN-1:0] DEFAULT_mcause = {XLEN{1'b0}};
-    localparam [XLEN-1:0] DEFAULT_mscratch = {XLEN{1'b0}};        //ADDED
+    localparam [XLEN-1:0] DEFAULT_mscratch = {XLEN{1'b0}};
     localparam [XLEN-1:0] DEFAULT_mcycle = 32'b0;
     localparam [XLEN-1:0] DEFAULT_minstret = 32'b0;
     localparam [XLEN-1:0] DEFAULT_mie    = 32'b0;
@@ -64,7 +69,7 @@ module CSRFile #(
             12'h301: csr_read_data = misa;
             12'h304: csr_read_data = mie;
             12'h305: csr_read_data = mtvec;
-            12'h340: csr_read_data = mscratch;             //ADDED
+            12'h340: csr_read_data = mscratch;
             12'h341: csr_read_data = mepc;
             12'h342: csr_read_data = mcause;
             12'h344: csr_read_data = mip;
@@ -91,7 +96,7 @@ module CSRFile #(
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             mtvec   <= DEFAULT_mtvec;
-            mscratch <= DEFAULT_mscratch;                       //ADDED
+            mscratch <= DEFAULT_mscratch;
             mepc    <= DEFAULT_mepc;
             mcause  <= DEFAULT_mcause;
             mcycle  <= DEFAULT_mcycle;
@@ -100,6 +105,9 @@ module CSRFile #(
 
             csr_processing <= 1'b0;
             csr_read_out <= {XLEN{1'b0}};
+            
+            MIE  <= 1'b0;
+            MPIE <= 1'b0;
         end 
         else if (clk_enable) begin
             mcycle <= mcycle + 1;
@@ -107,7 +115,18 @@ module CSRFile #(
             if (instruction_retired) begin
                 minstret <= minstret + 1;
             end
-
+            if (trapped) begin
+                MPIE <= MIE;     
+                MIE  <= 1'b0;    
+            end 
+            else if (mret_executed) begin
+                MIE  <= MPIE; 
+                MPIE <= 1'b1;
+            end 
+            else if (csr_write_enable && (csr_write_address == 12'h300)) begin
+                MIE  <= csr_write_data[3];
+                MPIE <= csr_write_data[7];
+            end
             if (csr_access && !csr_processing) begin
                 csr_processing <= 1'b1;
                 csr_read_out <= csr_read_data;
@@ -125,7 +144,7 @@ module CSRFile #(
             case (csr_write_address)
                 12'h304: mie    <= csr_write_data;
                 12'h305: mtvec  <= csr_write_data;
-                12'h340: mscratch <= csr_wirte_data;           //ADDED
+                12'h340: mscratch <= csr_write_data;
                 12'h341: mepc   <= csr_write_data;
                 12'h342: mcause <= csr_write_data;
                 default: ;
@@ -133,6 +152,7 @@ module CSRFile #(
             end
         end
     end
+
 
 
 endmodule
