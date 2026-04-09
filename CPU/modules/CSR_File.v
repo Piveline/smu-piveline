@@ -17,9 +17,9 @@ module CSRFile #(
     input timer_interrupt_pending,
 
     output reg [XLEN-1:0] csr_read_out,   // data from CSR Unit
-    output reg csr_ready                  // signal to stall the process while accessing the CSR until it outputs the desired value.
-    output mstatus_mie;
-    output mie_mtie;
+    output reg csr_ready,              // signal to stall the process while accessing the CSR until it outputs the desired value.
+    output mstatus_mie, 
+    output mie_mtie
 
     );
 
