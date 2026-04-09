@@ -15,6 +15,9 @@ module CSRFile_tb;
     wire [31:0] csr_read_out;
     wire        csr_ready;
 
+    wire        tb_mstatus_mie;
+    wire        tb_mie_mtie;
+
     CSRFile csr_file (
         .clk(clk),
         .clk_enable(1'b1), // Always enabled for testing
@@ -30,7 +33,10 @@ module CSRFile_tb;
         .timer_interrupt_pending(timer_interrupt_pending),
 
         .csr_read_out(csr_read_out),
-        .csr_ready(csr_ready)
+        .csr_ready(csr_ready), 
+
+        .mstatus_mie(tb_mstatus_mie),
+        .mie_mtie(tb_mie_mtie)
     );
 
     // Generate clock signal, 10ns.
@@ -281,7 +287,6 @@ module CSRFile_tb;
         
         csr_read_address = 12'h300; #10;
         $display("After mret:  mstatus = %h (Expected MIE=1, MPIE=1 -> 00001888)", csr_read_out);
-        
         // Final values
         $display("\n=== Final Counter Values ===");
         csr_read_address = 12'hB00; #10;

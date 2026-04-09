@@ -18,6 +18,9 @@ module CSRFile #(
 
     output reg [XLEN-1:0] csr_read_out,   // data from CSR Unit
     output reg csr_ready                  // signal to stall the process while accessing the CSR until it outputs the desired value.
+    output mstatus_mie;
+    output mie_mtie;
+
     );
 
     wire [XLEN-1:0] mvendorid = 32'h52_56_4B_43;    // "RVKC" ; "R"ISC-"V", "K"HWL & "C"hoiCube84.
@@ -46,6 +49,10 @@ module CSRFile #(
 
     wire csr_access;
     assign csr_access = valid_csr_address;
+
+    assign mstatus_mie = MIE;
+    assign mie_mtie = mie[7];
+
 
     localparam [XLEN-1:0] DEFAULT_mtvec  = 32'h00006D60;
     localparam [XLEN-1:0] DEFAULT_mepc   = {XLEN{1'b0}};
