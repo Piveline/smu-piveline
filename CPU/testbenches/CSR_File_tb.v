@@ -15,8 +15,8 @@ module CSRFile_tb;
     wire [31:0] csr_read_out;
     wire        csr_ready;
 
-    wire        tb_mstatus_mie;
-    wire        tb_mie_mtie;
+    wire        mstatus_mie;
+    wire        mie_mtie;
 
     CSRFile csr_file (
         .clk(clk),
@@ -35,8 +35,8 @@ module CSRFile_tb;
         .csr_read_out(csr_read_out),
         .csr_ready(csr_ready), 
 
-        .mstatus_mie(tb_mstatus_mie),
-        .mie_mtie(tb_mie_mtie)
+        .mstatus_mie(mstatus_mie),
+        .mie_mtie(mie_mtie)
     );
 
     // Generate clock signal, 10ns.
