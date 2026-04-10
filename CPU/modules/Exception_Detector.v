@@ -1,12 +1,15 @@
-`include "./opcode.vh"
-`include "./store_funct3.vh"
-`include "./load_funct3.vh"
-`include "./trap.vh"
+`include "modules/headers/opcode.vh"
+`include "modules/headers/store_funct3.vh"
+`include "modules/headers/load_funct3.vh"
+`include "modules/headers/trap.vh"
 
 module ExceptionDetector (
-    input clk,
+    input clk,  
     input clk_enable,
     input reset,
+    input timer_interrupt,
+    input mstatus_mie,
+    input mie_mtie,
     input [6:0] ID_opcode,
     input [6:0] EXR_opcode,
     input [6:0] EX_opcode,
@@ -33,21 +36,21 @@ module ExceptionDetector (
     input branch_prediction_miss,
     
     output reg trapped,
-    output reg [2:0] trap_status
+    output reg [3:0] trap_status
 );
     reg ID_trapped;
-    reg [2:0] ID_trap_status;
+    reg [3:0] ID_trap_status;
     reg EXR_trapped;
-    reg [2:0] EXR_trap_status;
+    reg [3:0] EXR_trap_status;
     reg EX_trapped;
-    reg [2:0] EX_trap_status;
+    reg [3:0] EX_trap_status;
     reg EX2_trapped;
-    reg [2:0] EX2_trap_status;
+    reg [3:0] EX2_trap_status;
     reg MEM_trapped;
-    reg [2:0] MEM_trap_status;
+    reg [3:0] MEM_trap_status;
     reg trapped_combinatorial;
-    reg [2:0] trap_status_combinatorial;
-
+    reg [3:0] trap_status_combinatorial;
+    wire timer_irq_vld=timer_interrupt && mstatus_mie && mie_mtie;
     always @(*) begin
         ID_trap_status = `TRAP_NONE;
         ID_trapped = 1'b0;
@@ -346,8 +349,11 @@ module ExceptionDetector (
                 MEM_trap_status = `TRAP_NONE;
             end
         endcase
-
-        if (MEM_trapped) begin
+        if (timer_irq_vld) begin
+            trapped_combinatorial=1'b1;
+            trap_status_combinatorial=  `TIMER_INTERRUPT_IRQ; // 4'h8
+        end
+        else if (MEM_trapped) begin
             trapped_combinatorial = 1'b1;
             trap_status_combinatorial = MEM_trap_status;
         end 
