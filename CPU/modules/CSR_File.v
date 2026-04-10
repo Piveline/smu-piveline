@@ -17,7 +17,10 @@ module CSRFile #(
     input timer_interrupt_pending,
 
     output reg [XLEN-1:0] csr_read_out,   // data from CSR Unit
-    output reg csr_ready                  // signal to stall the process while accessing the CSR until it outputs the desired value.
+    output reg csr_ready,              // signal to stall the process while accessing the CSR until it outputs the desired value.
+    output mstatus_mie, 
+    output mie_mtie
+
     );
 
     wire [XLEN-1:0] mvendorid = 32'h52_56_4B_43;    // "RVKC" ; "R"ISC-"V", "K"HWL & "C"hoiCube84.
@@ -46,6 +49,10 @@ module CSRFile #(
 
     wire csr_access;
     assign csr_access = valid_csr_address;
+
+    assign mstatus_mie = MIE;
+    assign mie_mtie = mie[7];
+
 
     localparam [XLEN-1:0] DEFAULT_mtvec  = 32'h00006D60;
     localparam [XLEN-1:0] DEFAULT_mepc   = {XLEN{1'b0}};
@@ -142,11 +149,11 @@ module CSRFile #(
             // Write Operation
             if ((trapped && csr_write_enable) || (csr_write_enable)) begin
             case (csr_write_address)
-                12'h304: mie    <= csr_write_data;
-                12'h305: mtvec  <= csr_write_data;
+                12'h304: mie    <=   csr_write_data;
+                12'h305: mtvec  <=   csr_write_data;
                 12'h340: mscratch <= csr_write_data;
-                12'h341: mepc   <= csr_write_data;
-                12'h342: mcause <= csr_write_data;
+                12'h341: mepc   <=   csr_write_data;
+                12'h342: mcause <=   csr_write_data;
                 default: ;
             endcase
             end

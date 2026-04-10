@@ -15,6 +15,9 @@ module CSRFile_tb;
     wire [31:0] csr_read_out;
     wire        csr_ready;
 
+    wire        mstatus_mie;
+    wire        mie_mtie;
+
     CSRFile csr_file (
         .clk(clk),
         .clk_enable(1'b1), // Always enabled for testing
@@ -30,7 +33,10 @@ module CSRFile_tb;
         .timer_interrupt_pending(timer_interrupt_pending),
 
         .csr_read_out(csr_read_out),
-        .csr_ready(csr_ready)
+        .csr_ready(csr_ready), 
+
+        .mstatus_mie(mstatus_mie),
+        .mie_mtie(mie_mtie)
     );
 
     // Generate clock signal, 10ns.
@@ -281,7 +287,34 @@ module CSRFile_tb;
         
         csr_read_address = 12'h300; #10;
         $display("After mret:  mstatus = %h (Expected MIE=1, MPIE=1 -> 00001888)", csr_read_out);
+
+        //-----------------------
+        $display("\n=== Test 15: mscratch R/W Test ===");
+        csr_read_address = 12'h340; #10; 
+        $display("mscratch (reset) = %h (expected 00000000)", csr_read_out);
         
+        csr_write_address = 12'h340;
+        csr_write_data = 32'hDEADBEEF; 
+        csr_write_enable = 1; #10;
+        csr_write_enable = 0; #10;
+        
+        csr_read_address = 12'h340; #10;
+        $display("mscratch (after write) = %h (expected DEADBEEF)", csr_read_out);
+
+        $display("\n=== Test 16: mie (12'h304) and Output Wires Test ===");
+        csr_write_address = 12'h304; 
+        csr_write_data = 32'h00000080; 
+        csr_write_enable = 1; #10;
+        csr_write_enable = 0; #10;
+
+        csr_read_address = 12'h304; #10;
+        $display("mie = %h (expected 00000080)", csr_read_out);
+        $display("mie_mtie wire output = %b (expected 1)", mie_mtie);
+        $display("mstatus_mie wire output = %b (current MIE state)", mstatus_mie);
+
+        //---------------
+
+
         // Final values
         $display("\n=== Final Counter Values ===");
         csr_read_address = 12'hB00; #10;
