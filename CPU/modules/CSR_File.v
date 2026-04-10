@@ -149,11 +149,11 @@ module CSRFile #(
             // Write Operation
             if ((trapped && csr_write_enable) || (csr_write_enable)) begin
             case (csr_write_address)
-                12'h304: mie    <= csr_write_data;
-                12'h305: mtvec  <= csr_write_data;
+                12'h304: mie    <=   csr_write_data;
+                12'h305: mtvec  <=   csr_write_data;
                 12'h340: mscratch <= csr_write_data;
-                12'h341: mepc   <= csr_write_data;
-                12'h342: mcause <= csr_write_data;
+                12'h341: mepc   <=   csr_write_data;
+                12'h342: mcause <=   csr_write_data;
                 default: ;
             endcase
             end

@@ -288,7 +288,7 @@ module CSRFile_tb;
         csr_read_address = 12'h300; #10;
         $display("After mret:  mstatus = %h (Expected MIE=1, MPIE=1 -> 00001888)", csr_read_out);
 
-             //-----------------------
+        //-----------------------
         $display("\n=== Test 15: mscratch R/W Test ===");
         csr_read_address = 12'h340; #10; 
         $display("mscratch (reset) = %h (expected 00000000)", csr_read_out);
@@ -297,7 +297,7 @@ module CSRFile_tb;
         csr_write_data = 32'hDEADBEEF; 
         csr_write_enable = 1; #10;
         csr_write_enable = 0; #10;
-
+        
         csr_read_address = 12'h340; #10;
         $display("mscratch (after write) = %h (expected DEADBEEF)", csr_read_out);
 
@@ -309,10 +309,11 @@ module CSRFile_tb;
 
         csr_read_address = 12'h304; #10;
         $display("mie = %h (expected 00000080)", csr_read_out);
-        $display("tb_mie_mtie wire output = %b (expected 1)", tb_mie_mtie);
-        $display("tb_mstatus_mie wire output = %b (current MIE state)", tb_mstatus_mie);
+        $display("mie_mtie wire output = %b (expected 1)", mie_mtie);
+        $display("mstatus_mie wire output = %b (current MIE state)", mstatus_mie);
 
         //---------------
+
 
         // Final values
         $display("\n=== Final Counter Values ===");
