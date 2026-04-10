@@ -351,7 +351,7 @@ module ExceptionDetector (
         endcase
         if (timer_irq_vld) begin
             trapped_combinatorial=1'b1;
-            trap_status_combinatorial=  `TIMER_INTERRUPT_IRQ; // 4'h7
+            trap_status_combinatorial=  `TIMER_INTERRUPT_IRQ; // 4'h8
         end
         else if (MEM_trapped) begin
             trapped_combinatorial = 1'b1;
